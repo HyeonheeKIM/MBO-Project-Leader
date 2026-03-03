@@ -1,0 +1,1319 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MBO Project Leader - 데스크톱 프로젝트 목표 관리 프로그램</title>
+    <style>
+        /* ===== Reset & Base ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.08);
+            --glass-border: rgba(255, 255, 255, 0.18);
+            --glass-shadow: rgba(0, 0, 0, 0.25);
+            --glass-highlight: rgba(255, 255, 255, 0.35);
+            --accent-blue: #60a5fa;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a78bfa;
+            --accent-pink: #f472b6;
+            --accent-green: #34d399;
+            --text-primary: rgba(255, 255, 255, 0.95);
+            --text-secondary: rgba(255, 255, 255, 0.65);
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f0c29 0%, #1a1a4e 25%, #24243e 50%, #141e30 75%, #0f0c29 100%);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ===== Animated Background ===== */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background:
+                radial-gradient(ellipse 600px 600px at 20% 30%, rgba(96, 165, 250, 0.12) 0%, transparent 70%),
+                radial-gradient(ellipse 500px 500px at 80% 20%, rgba(167, 139, 250, 0.10) 0%, transparent 70%),
+                radial-gradient(ellipse 400px 400px at 50% 80%, rgba(34, 211, 238, 0.08) 0%, transparent 70%),
+                radial-gradient(ellipse 350px 350px at 70% 60%, rgba(244, 114, 182, 0.06) 0%, transparent 70%);
+            animation: bgFloat 20s ease-in-out infinite;
+            z-index: 0;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(-2%, 1%) rotate(1deg); }
+            50% { transform: translate(1%, -1%) rotate(-0.5deg); }
+            75% { transform: translate(-1%, 2%) rotate(0.5deg); }
+        }
+
+        /* ===== Liquid Glass Mixin ===== */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px) saturate(1.6);
+            -webkit-backdrop-filter: blur(24px) saturate(1.6);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow:
+                0 8px 32px var(--glass-shadow),
+                inset 0 1px 0 var(--glass-highlight),
+                inset 0 -1px 0 rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -75%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
+            transform: skewX(-15deg);
+            animation: glassShine 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes glassShine {
+            0%, 100% { left: -75%; }
+            50% { left: 125%; }
+        }
+
+        /* ===== Container ===== */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== Navigation ===== */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 32px;
+            margin-bottom: 48px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-logo-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 15px rgba(96, 165, 250, 0.3);
+        }
+
+        .nav-logo-text {
+            font-size: 20px;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 8px;
+        }
+
+        .nav-link {
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--text-primary);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .nav-cta {
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(96, 165, 250, 0.25);
+        }
+
+        .nav-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(96, 165, 250, 0.4);
+        }
+
+        /* ===== Hero Section ===== */
+        .hero {
+            text-align: center;
+            padding: 60px 0 80px;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent-cyan);
+            margin-bottom: 32px;
+            background: rgba(34, 211, 238, 0.08);
+            border: 1px solid rgba(34, 211, 238, 0.2);
+        }
+
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.85); }
+        }
+
+        .hero h1 {
+            font-size: clamp(36px, 6vw, 64px);
+            font-weight: 900;
+            line-height: 1.15;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-cyan) 40%, var(--accent-purple) 70%, var(--accent-pink) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% 200%;
+            animation: gradientShift 4s ease-in-out infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero p {
+            font-size: 18px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            max-width: 620px;
+            margin: 0 auto 48px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 16px 36px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(96, 165, 250, 0.3);
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(96, 165, 250, 0.45);
+        }
+
+        .btn-secondary {
+            padding: 16px 36px;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.12);
+            transform: translateY(-3px);
+        }
+
+        /* ===== Preview Card ===== */
+        .preview-section {
+            margin: 0 auto 100px;
+            max-width: 960px;
+        }
+
+        .preview-card {
+            padding: 32px;
+            position: relative;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 24px;
+        }
+
+        .preview-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .preview-dot.red { background: #ff5f57; }
+        .preview-dot.yellow { background: #febc2e; }
+        .preview-dot.green { background: #28c840; }
+
+        .preview-title {
+            margin-left: 12px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .preview-body {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 24px;
+            min-height: 360px;
+        }
+
+        .preview-sidebar {
+            background: rgba(255,255,255,0.04);
+            border-radius: 16px;
+            padding: 20px 16px;
+        }
+
+        .preview-sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            transition: all 0.2s;
+        }
+
+        .preview-sidebar-item.active {
+            background: rgba(96, 165, 250, 0.12);
+            color: var(--accent-blue);
+        }
+
+        .preview-sidebar-item .icon { font-size: 16px; }
+
+        .preview-content {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .preview-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 120px 80px;
+            align-items: center;
+            padding: 14px 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 12px;
+            font-size: 13px;
+            gap: 12px;
+        }
+
+        .preview-row.header {
+            background: transparent;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .preview-project-name {
+            font-weight: 500;
+        }
+
+        .preview-status {
+            display: inline-flex;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-progress {
+            background: rgba(96, 165, 250, 0.15);
+            color: var(--accent-blue);
+        }
+
+        .status-complete {
+            background: rgba(52, 211, 153, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-pending {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+        }
+
+        .preview-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.06);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .preview-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 1.5s ease;
+        }
+
+        .fill-blue { background: linear-gradient(90deg, var(--accent-blue), var(--accent-cyan)); }
+        .fill-green { background: linear-gradient(90deg, var(--accent-green), #6ee7b7); }
+        .fill-yellow { background: linear-gradient(90deg, #fbbf24, #fde68a); }
+        .fill-purple { background: linear-gradient(90deg, var(--accent-purple), var(--accent-pink)); }
+
+        /* ===== Features Section ===== */
+        .section-label {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent-cyan);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: clamp(28px, 4vw, 42px);
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            text-align: center;
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 540px;
+            margin: 0 auto 56px;
+            line-height: 1.6;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 100px;
+        }
+
+        .feature-card {
+            padding: 36px 32px;
+            transition: all 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 24px;
+        }
+
+        .icon-blue { background: rgba(96, 165, 250, 0.12); }
+        .icon-cyan { background: rgba(34, 211, 238, 0.12); }
+        .icon-purple { background: rgba(167, 139, 250, 0.12); }
+        .icon-pink { background: rgba(244, 114, 182, 0.12); }
+        .icon-green { background: rgba(52, 211, 153, 0.12); }
+        .icon-yellow { background: rgba(251, 191, 36, 0.12); }
+
+        .feature-card h3 {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+
+        /* ===== Workflow Section ===== */
+        .workflow-section {
+            margin-bottom: 100px;
+        }
+
+        .workflow-steps {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+            position: relative;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 220px;
+            max-width: 280px;
+            text-align: center;
+            padding: 40px 24px;
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: '→';
+            position: absolute;
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 24px;
+            color: var(--text-secondary);
+            opacity: 0.4;
+        }
+
+        .workflow-step:last-child::after { display: none; }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            border: 2px solid var(--glass-border);
+        }
+
+        .step-1 { background: rgba(96, 165, 250, 0.15); color: var(--accent-blue); }
+        .step-2 { background: rgba(167, 139, 250, 0.15); color: var(--accent-purple); }
+        .step-3 { background: rgba(34, 211, 238, 0.15); color: var(--accent-cyan); }
+        .step-4 { background: rgba(52, 211, 153, 0.15); color: var(--accent-green); }
+
+        .workflow-step h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .workflow-step p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== Stats Section ===== */
+        .stats-section {
+            margin-bottom: 100px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 24px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 36px 24px;
+        }
+
+        .stat-value {
+            font-size: 42px;
+            font-weight: 900;
+            margin-bottom: 8px;
+        }
+
+        .stat-value.blue { color: var(--accent-blue); }
+        .stat-value.cyan { color: var(--accent-cyan); }
+        .stat-value.purple { color: var(--accent-purple); }
+        .stat-value.green { color: var(--accent-green); }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== Tech Stack / Architecture ===== */
+        .arch-section {
+            margin-bottom: 100px;
+        }
+
+        .arch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .arch-item {
+            text-align: center;
+            padding: 28px 16px;
+            transition: all 0.3s;
+        }
+
+        .arch-item:hover {
+            transform: translateY(-4px);
+        }
+
+        .arch-item .icon {
+            font-size: 36px;
+            margin-bottom: 14px;
+            display: block;
+        }
+
+        .arch-item .name {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .arch-item .desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== CTA Section ===== */
+        .cta-section {
+            text-align: center;
+            padding: 80px 40px;
+            margin-bottom: 60px;
+            background: linear-gradient(135deg, rgba(96,165,250,0.08), rgba(167,139,250,0.08));
+        }
+
+        .cta-section h2 {
+            font-size: clamp(28px, 4vw, 38px);
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta-section p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 36px;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+
+        /* ===== Footer ===== */
+        .footer {
+            text-align: center;
+            padding: 40px 0;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-top: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .footer a {
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        /* ===== Floating Particles ===== */
+        .particles {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 50%;
+            animation: floatParticle linear infinite;
+        }
+
+        @keyframes floatParticle {
+            0% { transform: translateY(100vh) scale(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-10vh) scale(1); opacity: 0; }
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .preview-body { grid-template-columns: 1fr; }
+            .preview-sidebar { display: none; }
+            .workflow-step::after { display: none; }
+            .workflow-steps { flex-direction: column; align-items: center; }
+            .hero { padding: 32px 0 50px; }
+            .preview-row { grid-template-columns: 1fr 80px 80px; }
+            .preview-row > *:last-child { display: none; }
+        }
+
+        /* ===== Scroll Animation ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+
+<!-- Floating Particles -->
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+    <!-- Navigation -->
+    <nav class="glass nav-bar">
+        <div class="nav-logo">
+            <div class="nav-logo-icon">📊</div>
+            <span class="nav-logo-text">MBO Leader</span>
+        </div>
+        <div class="nav-links">
+            <a class="nav-link active" href="#features">기능</a>
+            <a class="nav-link" href="#workflow">워크플로우</a>
+            <a class="nav-link" href="#usage-guide">사용 방법</a>
+            <a class="nav-link" href="#architecture">기술 스택</a>
+        </div>
+        <a class="nav-cta" href="#start">시작하기 →</a>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <span class="hero-badge-dot"></span>
+            MBO Project Leader v1.0 — 순수 데스크톱 애플리케이션
+        </div>
+        <h1>
+            연도별 목표를<br>
+            <span class="gradient-text">프로젝트별로 관리</span>하세요
+        </h1>
+        <p>
+            설치 없이 Python만으로 실행되는 데스크톱 프로그램입니다.<br>
+            월별·일별 계획 수립부터 진행률 추적까지,<br>
+            MBO(Management By Objectives) 기반의 체계적인 프로젝트 목표 관리 도구입니다.
+        </p>
+        <div class="hero-buttons">
+            <a class="btn-primary" href="#start">🚀 프로그램 실행 방법</a>
+            <a class="btn-secondary" href="#features">기능 둘러보기</a>
+        </div>
+    </section>
+
+    <!-- Preview -->
+    <section class="preview-section reveal">
+        <div class="glass preview-card">
+            <div class="preview-header">
+                <span class="preview-dot red"></span>
+                <span class="preview-dot yellow"></span>
+                <span class="preview-dot green"></span>
+                <span class="preview-title">MBO Project Leader — 데스크톱 앱 (tkinter 기반)</span>
+            </div>
+            <div class="preview-body">
+                <div class="preview-sidebar">
+                    <div class="preview-sidebar-item active">
+                        <span class="icon">📋</span> 대시보드
+                    </div>
+                    <div class="preview-sidebar-item">
+                        <span class="icon">📂</span> 프로젝트
+                    </div>
+                    <div class="preview-sidebar-item">
+                        <span class="icon">📅</span> 월별 계획
+                    </div>
+                    <div class="preview-sidebar-item">
+                        <span class="icon">✅</span> 일별 체크
+                    </div>
+                    <div class="preview-sidebar-item">
+                        <span class="icon">📈</span> 추적/분석
+                    </div>
+                    <div class="preview-sidebar-item">
+                        <span class="icon">⚙️</span> 설정
+                    </div>
+                </div>
+                <div class="preview-content">
+                    <div class="preview-row header">
+                        <span>프로젝트명</span>
+                        <span>상태</span>
+                        <span>진행률</span>
+                        <span>달성률</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-project-name">🔵 AI 챗봇 개발</span>
+                        <span class="preview-status status-progress">진행중</span>
+                        <span>
+                            <div class="preview-progress-bar"><div class="preview-progress-fill fill-blue" style="width:72%"></div></div>
+                        </span>
+                        <span style="font-weight:600; color:var(--accent-blue)">72%</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-project-name">🟢 ERP 시스템 고도화</span>
+                        <span class="preview-status status-complete">완료</span>
+                        <span>
+                            <div class="preview-progress-bar"><div class="preview-progress-fill fill-green" style="width:100%"></div></div>
+                        </span>
+                        <span style="font-weight:600; color:var(--accent-green)">100%</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-project-name">🟡 모바일 앱 리뉴얼</span>
+                        <span class="preview-status status-pending">대기</span>
+                        <span>
+                            <div class="preview-progress-bar"><div class="preview-progress-fill fill-yellow" style="width:35%"></div></div>
+                        </span>
+                        <span style="font-weight:600; color:#fbbf24">35%</span>
+                    </div>
+                    <div class="preview-row">
+                        <span class="preview-project-name">🟣 보안 인프라 구축</span>
+                        <span class="preview-status status-progress">진행중</span>
+                        <span>
+                            <div class="preview-progress-bar"><div class="preview-progress-fill fill-purple" style="width:58%"></div></div>
+                        </span>
+                        <span style="font-weight:600; color:var(--accent-purple)">58%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section id="features" class="reveal">
+        <p class="section-label">Features</p>
+        <h2 class="section-title">핵심 기능</h2>
+        <p class="section-desc">MBO 목표 관리에 필요한 모든 기능을 하나의 시스템에서 제공합니다.</p>
+
+        <div class="features-grid">
+            <div class="glass feature-card">
+                <div class="feature-icon icon-blue">📅</div>
+                <h3>연도별 MBO 관리</h3>
+                <p>연도 관리 페이지에서 연도를 추가/선택합니다. 각 연도별로 독립적인 프로젝트 목표를 관리하며, 과거 데이터를 참조할 수 있습니다.</p>
+            </div>
+            <div class="glass feature-card">
+                <div class="feature-icon icon-purple">📂</div>
+                <h3>프로젝트별 목표 설정</h3>
+                <p>프로젝트명, 설명, KPI, 가중치(%), 우선순위(⭐1~5), 상태(대기/진행중/완료/취소)를 설정합니다. 수정·삭제가 자유롭습니다.</p>
+            </div>
+            <div class="glass feature-card">
+                <div class="feature-icon icon-cyan">📆</div>
+                <h3>월별 계획 수립</h3>
+                <p>12개월 카드 뷰에서 각 월의 마일스톤과 목표를 설정합니다. 월별로 상태(미완료/진행중/완료)와 비고를 기록할 수 있습니다.</p>
+            </div>
+            <div class="glass feature-card">
+                <div class="feature-icon icon-green">✅</div>
+                <h3>일별 실행 & 체크</h3>
+                <p>달력 UI에서 날짜를 선택하고, 태스크를 추가합니다. 체크박스로 완료 여부를 토글하면 진행률이 자동 계산됩니다.</p>
+            </div>
+            <div class="glass feature-card">
+                <div class="feature-icon icon-pink">📈</div>
+                <h3>추적 & 분석</h3>
+                <p>프로젝트별 태스크 달성률, 월별 달성률, 가중치, 완료 태스크/마일스톤 수를 한눈에 확인합니다. 12개월 인디케이터로 진행 상태를 시각화합니다.</p>
+            </div>
+            <div class="glass feature-card">
+                <div class="feature-icon icon-yellow">📊</div>
+                <h3>대시보드 & 통계</h3>
+                <p>전체 프로젝트 수, 완료 수, 진행중 수, 평균 달성률, 오늘 태스크 현황 등 핵심 통계를 대시보드에서 실시간으로 확인합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Workflow -->
+    <section id="workflow" class="workflow-section reveal">
+        <p class="section-label">Workflow</p>
+        <h2 class="section-title">사용 흐름</h2>
+        <p class="section-desc">4단계의 간단한 흐름으로 체계적인 MBO 관리를 시작하세요.</p>
+
+        <div class="workflow-steps">
+            <div class="workflow-step">
+                <div class="step-number step-1">1</div>
+                <h3>연도 · 프로젝트 등록</h3>
+                <p>[연도 관리]에서 연도를 추가하고, [프로젝트] 메뉴에서 KPI·가중치·우선순위를 설정합니다.</p>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number step-2">2</div>
+                <h3>월별 계획 설정</h3>
+                <p>[월별 계획]에서 프로젝트를 선택 후 12개월 카드 클릭→마일스톤·목표·상태를 입력합니다.</p>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number step-3">3</div>
+                <h3>일별 태스크 체크</h3>
+                <p>[일별 체크]에서 달력으로 날짜 선택 후 태스크를 추가하고, 체크박스로 완료 처리합니다.</p>
+            </div>
+            <div class="workflow-step">
+                <div class="step-number step-4">4</div>
+                <h3>대시보드 · 분석</h3>
+                <p>[대시보드]와 [추적/분석]에서 달성률·통계를 확인하고 목표를 조정합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats -->
+    <section class="stats-section reveal">
+        <div class="stats-grid">
+            <div class="glass stat-card">
+                <div class="stat-value blue">∞</div>
+                <div class="stat-label">연도 무제한 관리</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-value cyan">12</div>
+                <div class="stat-label">월별 마일스톤 추적</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-value purple">365</div>
+                <div class="stat-label">일별 태스크 체크</div>
+            </div>
+            <div class="glass stat-card">
+                <div class="stat-value green">100%</div>
+                <div class="stat-label">목표 달성 가시화</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture -->
+    <section id="architecture" class="arch-section reveal">
+        <p class="section-label">Tech Stack</p>
+        <h2 class="section-title">기술 아키텍처</h2>
+        <p class="section-desc">외부 패키지 없이 Python 표준 라이브러리만으로 구축되었습니다.</p>
+
+        <div class="arch-grid">
+            <div class="glass arch-item">
+                <span class="icon">🐍</span>
+                <div class="name">Python 3</div>
+                <div class="desc">메인 언어</div>
+            </div>
+            <div class="glass arch-item">
+                <span class="icon">🖥️</span>
+                <div class="name">tkinter</div>
+                <div class="desc">GUI 프레임워크</div>
+            </div>
+            <div class="glass arch-item">
+                <span class="icon">🗄️</span>
+                <div class="name">SQLite</div>
+                <div class="desc">로컬 데이터베이스</div>
+            </div>
+            <div class="glass arch-item">
+                <span class="icon">🎨</span>
+                <div class="name">Dark Theme</div>
+                <div class="desc">커스텀 다크 모드 UI</div>
+            </div>
+            <div class="glass arch-item">
+                <span class="icon">📐</span>
+                <div class="name">Custom Widgets</div>
+                <div class="desc">RoundButton · ProgressBar</div>
+            </div>
+            <div class="glass arch-item">
+                <span class="icon">📦</span>
+                <div class="name">설치 불필요</div>
+                <div class="desc">Python 표준 라이브러리만 사용</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section id="start" class="glass cta-section reveal">
+        <h2>지금 바로 시작하세요</h2>
+        <p>웹 서버 없이, 추가 패키지 설치 없이 — Python만 있으면 됩니다.</p>
+        <div style="background:rgba(0,0,0,0.3);border-radius:16px;padding:28px 36px;display:inline-block;text-align:left;margin-bottom:28px;border:1px solid rgba(255,255,255,0.1);">
+            <p style="font-size:13px;color:var(--accent-cyan);margin-bottom:10px;font-weight:600;">실행 방법</p>
+            <code style="font-size:16px;color:#e2e4f0;font-family:'Consolas','Courier New',monospace;letter-spacing:0.5px;">python Project_Leader.py</code>
+            <p style="font-size:12px;color:var(--text-secondary);margin-top:12px;line-height:1.6;">
+                📁 실행 위치 : Project_Leader.py 가 있는 폴더<br>
+                💾 데이터 저장 : 같은 폴더에 <b>mbo_project_leader.db</b> 자동 생성<br>
+                🔒 로컬 전용 : 모든 데이터가 내 PC에만 저장됩니다
+            </p>
+        </div>
+        <div class="hero-buttons" style="justify-content:center;">
+            <button class="btn-primary" onclick="alert('터미널에서 아래 명령을 실행하세요:\n\npython Project_Leader.py\n\n추가 패키지 설치 없이 바로 실행됩니다.')">🚀 실행 가이드 보기</button>
+        </div>
+    </section>
+
+    <!-- DB Schema -->
+    <section class="reveal" style="margin-bottom:60px;">
+        <p class="section-label">Database</p>
+        <h2 class="section-title">데이터 구조</h2>
+        <p class="section-desc">SQLite 4개 테이블로 모든 데이터를 체계적으로 관리합니다.</p>
+        <div class="features-grid" style="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));">
+            <div class="glass feature-card" style="padding:28px 24px;">
+                <div class="feature-icon icon-blue" style="font-size:22px;">📆</div>
+                <h3 style="font-size:16px;">years</h3>
+                <p style="font-size:12px;"><b>year</b> (PK) — 관리 대상 연도<br>여러 연도를 등록하고 연도별로 전환합니다.</p>
+            </div>
+            <div class="glass feature-card" style="padding:28px 24px;">
+                <div class="feature-icon icon-purple" style="font-size:22px;">📂</div>
+                <h3 style="font-size:16px;">projects</h3>
+                <p style="font-size:12px;"><b>id</b>, year, name, description, kpi, weight, priority, status, created_at<br>연도별 프로젝트를 저장합니다.</p>
+            </div>
+            <div class="glass feature-card" style="padding:28px 24px;">
+                <div class="feature-icon icon-cyan" style="font-size:22px;">📅</div>
+                <h3 style="font-size:16px;">monthly_plans</h3>
+                <p style="font-size:12px;"><b>id</b>, project_id, month, milestone, target, status, note<br>프로젝트별 12개월 마일스톤을 관리합니다.</p>
+            </div>
+            <div class="glass feature-card" style="padding:28px 24px;">
+                <div class="feature-icon icon-green" style="font-size:22px;">✅</div>
+                <h3 style="font-size:16px;">daily_tasks</h3>
+                <p style="font-size:12px;"><b>id</b>, project_id, task_date, title, description, is_done, priority, created_at<br>일별 태스크를 기록합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- App Structure -->
+    <section class="reveal" style="margin-bottom:60px;">
+        <p class="section-label">App Structure</p>
+        <h2 class="section-title">프로그램 구조</h2>
+        <p class="section-desc">Project_Leader.py 단일 파일로 구성됩니다.</p>
+        <div class="glass" style="padding:32px 36px;max-width:700px;margin:0 auto;">
+            <div style="font-family:'Consolas','Courier New',monospace;font-size:13px;line-height:2;color:var(--text-secondary);">
+                <span style="color:var(--accent-cyan);">📦 src/</span><br>
+                <span style="padding-left:20px;">├─ <span style="color:var(--accent-blue);font-weight:bold;">Project_Leader.py</span> <span style="color:var(--text-dark);">&nbsp;← 메인 프로그램 (tkinter + SQLite)</span></span><br>
+                <span style="padding-left:20px;">├─ <span style="color:var(--accent-green);">mbo_project_leader.db</span> <span style="color:var(--text-dark);">&nbsp;← 자동 생성되는 SQLite DB 파일</span></span><br>
+                <span style="padding-left:20px;">└─ <span style="color:var(--accent-purple);">project_leader_1.html</span> <span style="color:var(--text-dark);">&nbsp;← 이 소개 페이지</span></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Page Guide -->
+    <section class="reveal" style="margin-bottom:80px;">
+        <p class="section-label">Pages</p>
+        <h2 class="section-title">6개 화면 상세 안내</h2>
+        <p class="section-desc">사이드바에서 각 화면으로 이동합니다.</p>
+        <div style="max-width:800px;margin:0 auto;">
+            <div class="glass" style="padding:24px 28px;margin-bottom:16px;">
+                <h3 style="font-size:16px;margin-bottom:8px;">📋 대시보드</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">선택 연도의 전체 통계(프로젝트 수, 완료 수, 진행중, 평균 달성률, 오늘 태스크)를 카드로 표시합니다. 하단에 프로젝트 목록 테이블이 상태·진행률 바와 함께 나타납니다.</p>
+            </div>
+            <div class="glass" style="padding:24px 28px;margin-bottom:16px;">
+                <h3 style="font-size:16px;margin-bottom:8px;">📂 프로젝트</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">프로젝트를 추가·수정·삭제합니다. 각 카드에 프로젝트명, KPI, 가중치(%), 우선순위(⭐), 상태, 진행률 바가 표시됩니다. 삭제 시 관련 월별 계획·일별 태스크도 함께 삭제됩니다.</p>
+            </div>
+            <div class="glass" style="padding:24px 28px;margin-bottom:16px;">
+                <h3 style="font-size:16px;margin-bottom:8px;">📅 월별 계획</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">프로젝트를 탭으로 선택 후, 1~12월 카드 그리드가 나타납니다. 각 카드를 클릭하면 마일스톤·목표·상태(미완료/진행중/완료)·비고를 입력하는 대화상자가 열립니다.</p>
+            </div>
+            <div class="glass" style="padding:24px 28px;margin-bottom:16px;">
+                <h3 style="font-size:16px;margin-bottom:8px;">✅ 일별 체크</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">좌측: 달력(◀▶ 월 이동, 날짜 클릭 선택, 태스크 있는 날에 · 표시). 우측: 해당 날짜의 태스크 목록. 체크박스로 완료 토글, 🗑️로 삭제. [+ 태스크 추가]로 제목·설명·날짜·우선순위를 입력합니다.</p>
+            </div>
+            <div class="glass" style="padding:24px 28px;margin-bottom:16px;">
+                <h3 style="font-size:16px;margin-bottom:8px;">📈 추적/분석</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">프로젝트별로 태스크 달성률, 월별 달성률, 가중치, 완료 태스크 수, 완료 마일스톤 수를 통계 카드로 표시합니다. 전체 진행률 바와 12개월 상태 인디케이터가 포함됩니다.</p>
+            </div>
+            <div class="glass" style="padding:24px 28px;margin-bottom:16px;">
+                <h3 style="font-size:16px;margin-bottom:8px;">📆 연도 관리</h3>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.7;">[+ 연도 추가]로 2000~2100 사이 연도를 등록합니다. 각 연도 카드에 프로젝트 수가 표시되며, 클릭하면 해당 연도 대시보드로 이동합니다.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- Usage Guide - 전체 사용 방법 가이드 -->
+    <!-- ============================================================ -->
+    <section id="usage-guide" class="reveal" style="margin-bottom:80px;">
+        <p class="section-label">Usage Guide</p>
+        <h2 class="section-title">사용 방법 안내</h2>
+        <p class="section-desc">프로그램 실행부터 프로젝트 추가·관리까지 전체 흐름을 단계별로 안내합니다.</p>
+
+        <div style="max-width:860px;margin:0 auto;">
+
+            <!-- STEP 0: 프로그램 실행 -->
+            <div class="glass" style="padding:28px 32px;margin-bottom:20px;border-left:4px solid var(--accent-cyan);">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(34,211,238,0.15);color:var(--accent-cyan);font-weight:900;font-size:16px;">0</span>
+                    <h3 style="font-size:18px;font-weight:700;">프로그램 실행</h3>
+                </div>
+                <div style="background:rgba(0,0,0,0.25);border-radius:12px;padding:16px 20px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.06);">
+                    <code style="font-size:14px;color:var(--accent-cyan);font-family:'Consolas','Courier New',monospace;">python Project_Leader.py</code>
+                </div>
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;">
+                    터미널(CMD / PowerShell)에서 <b>Project_Leader.py</b>가 있는 폴더로 이동 후 위 명령을 실행합니다.<br>
+                    처음 실행하면 <b>mbo_project_leader.db</b> 파일이 자동 생성되고, 현재 연도(2026)가 기본 등록됩니다.<br>
+                    추가 패키지 설치는 필요 없습니다 — Python 표준 라이브러리(tkinter, sqlite3)만 사용합니다.
+                </p>
+            </div>
+
+            <!-- STEP 1: 연도 확인/추가 -->
+            <div class="glass" style="padding:28px 32px;margin-bottom:20px;border-left:4px solid var(--accent-blue);">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(96,165,250,0.15);color:var(--accent-blue);font-weight:900;font-size:16px;">1</span>
+                    <h3 style="font-size:18px;font-weight:700;">연도 확인 · 추가</h3>
+                    <span style="font-size:11px;padding:3px 10px;background:rgba(96,165,250,0.12);color:var(--accent-blue);border-radius:12px;font-weight:600;">사이드바 → 📆 연도 관리</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:11px;color:var(--accent-blue);font-weight:600;margin-bottom:6px;">확인할 것</p>
+                        <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">프로그램을 처음 실행하면 현재 연도(2026)가 자동으로 등록되어 있습니다. 다른 연도를 관리하고 싶으면 이 화면에서 추가합니다.</p>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:11px;color:var(--accent-blue);font-weight:600;margin-bottom:6px;">연도 추가 방법</p>
+                        <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">우측 상단 <b>[+ 연도 추가]</b> 클릭 → 연도 입력 (예: 2027) → 확인. 등록된 연도 카드를 클릭하면 해당 연도 대시보드로 이동합니다.</p>
+                    </div>
+                </div>
+                <p style="font-size:12px;color:var(--text-dark);margin-top:4px;">💡 팁: 모든 다른 화면 상단에도 <b>연도 드롭다운</b>이 있어서, 언제든 연도를 전환할 수 있습니다.</p>
+            </div>
+
+            <!-- STEP 2: 프로젝트 추가 (핵심) -->
+            <div class="glass" style="padding:28px 32px;margin-bottom:20px;border-left:4px solid var(--accent-purple);">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(167,139,250,0.15);color:var(--accent-purple);font-weight:900;font-size:16px;">2</span>
+                    <h3 style="font-size:18px;font-weight:700;">프로젝트 추가 ⭐</h3>
+                    <span style="font-size:11px;padding:3px 10px;background:rgba(167,139,250,0.12);color:var(--accent-purple);border-radius:12px;font-weight:600;">사이드바 → 📂 프로젝트</span>
+                </div>
+
+                <p style="font-size:13px;color:var(--text-secondary);line-height:1.8;margin-bottom:16px;">
+                    프로젝트 화면에서 우측 상단 <b style="color:var(--accent-blue);">[+ 프로젝트 추가]</b> 버튼을 클릭하면 입력 대화상자가 열립니다.
+                </p>
+
+                <!-- 입력 필드 설명 테이블 -->
+                <div style="background:rgba(0,0,0,0.25);border-radius:14px;padding:20px 22px;margin-bottom:16px;border:1px solid rgba(255,255,255,0.06);">
+                    <p style="font-size:12px;color:var(--accent-purple);font-weight:700;margin-bottom:12px;">📝 입력 필드 설명</p>
+
+                    <div style="display:grid;grid-template-columns:120px 1fr;gap:0;font-size:12px;">
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--accent-blue);font-weight:600;">프로젝트명 *</div>
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-secondary);">프로젝트 이름 (필수 입력). 예: "AI 챗봇 개발", "ERP 고도화"</div>
+
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--accent-blue);font-weight:600;">설명</div>
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-secondary);">프로젝트에 대한 상세 메모 (여러 줄 입력 가능, 선택)</div>
+
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--accent-blue);font-weight:600;">KPI</div>
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-secondary);">핵심 성과 지표. 예: "고객 만족도 90% 달성", "월 매출 1억"</div>
+
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--accent-blue);font-weight:600;">가중치 (%)</div>
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-secondary);">연간 MBO에서 이 프로젝트의 비중. 숫자 입력 (예: 30)</div>
+
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--accent-blue);font-weight:600;">우선순위</div>
+                        <div style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,0.06);color:var(--text-secondary);">드롭다운에서 1~5 선택. 높을수록 목록 상단에 표시됨 (⭐ 수로 표현)</div>
+
+                        <div style="padding:8px 10px;color:var(--accent-blue);font-weight:600;">상태</div>
+                        <div style="padding:8px 10px;color:var(--text-secondary);">드롭다운: <span style="color:#fbbf24;">대기</span> · <span style="color:#60a5fa;">진행중</span> · <span style="color:#34d399;">완료</span> · <span style="color:#f87171;">취소</span> 중 선택</div>
+                    </div>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:11px;color:var(--accent-green);font-weight:600;margin-bottom:6px;">✅ 저장</p>
+                        <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">모든 항목을 입력한 후 <b>[저장]</b> 버튼 클릭. 프로젝트 목록에 즉시 반영됩니다.</p>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:11px;color:var(--accent-yellow);font-weight:600;margin-bottom:6px;">✏️ 수정 · 🗑️ 삭제</p>
+                        <p style="font-size:12px;color:var(--text-secondary);line-height:1.7;">프로젝트 카드 우측 상단의 <b>[✏️ 수정]</b>으로 수정, <b>[🗑️ 삭제]</b>로 삭제. 삭제 시 월별 계획·일별 태스크도 같이 삭제됩니다.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STEP 3: 월별 계획 설정 -->
+            <div class="glass" style="padding:28px 32px;margin-bottom:20px;border-left:4px solid var(--accent-cyan);">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(34,211,238,0.15);color:var(--accent-cyan);font-weight:900;font-size:16px;">3</span>
+                    <h3 style="font-size:18px;font-weight:700;">월별 계획 설정</h3>
+                    <span style="font-size:11px;padding:3px 10px;background:rgba(34,211,238,0.12);color:var(--accent-cyan);border-radius:12px;font-weight:600;">사이드바 → 📅 월별 계획</span>
+                </div>
+                <ol style="font-size:13px;color:var(--text-secondary);line-height:2.2;padding-left:20px;margin-bottom:14px;">
+                    <li>상단에서 <b>프로젝트 탭</b>을 클릭하여 대상 프로젝트를 선택합니다.</li>
+                    <li><b>1월 ~ 12월</b> 카드 그리드가 나타납니다. 설정하려는 월 카드를 <b>클릭</b>합니다.</li>
+                    <li>대화상자에서 다음 항목을 입력합니다:
+                        <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:12px 16px;margin:8px 0;border:1px solid rgba(255,255,255,0.06);">
+                            <span style="color:var(--accent-cyan);font-weight:600;">마일스톤</span> — 해당 월의 핵심 산출물 (예: "프로토타입 완성")<br>
+                            <span style="color:var(--accent-cyan);font-weight:600;">목표</span> — 달성할 목표 (예: "기능 테스트 완료")<br>
+                            <span style="color:var(--accent-cyan);font-weight:600;">상태</span> — 미완료 / 진행중 / 완료 선택<br>
+                            <span style="color:var(--accent-cyan);font-weight:600;">비고</span> — 추가 메모
+                        </div>
+                    </li>
+                    <li><b>[저장]</b> 을 누르면 카드에 마일스톤·목표·상태가 표시됩니다.</li>
+                </ol>
+                <p style="font-size:12px;color:var(--text-dark);">💡 팁: 같은 카드를 다시 클릭하면 기존 내용을 수정할 수 있습니다.</p>
+            </div>
+
+            <!-- STEP 4: 일별 태스크 관리 -->
+            <div class="glass" style="padding:28px 32px;margin-bottom:20px;border-left:4px solid var(--accent-green);">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(52,211,153,0.15);color:var(--accent-green);font-weight:900;font-size:16px;">4</span>
+                    <h3 style="font-size:18px;font-weight:700;">일별 태스크 추가 · 체크</h3>
+                    <span style="font-size:11px;padding:3px 10px;background:rgba(52,211,153,0.12);color:var(--accent-green);border-radius:12px;font-weight:600;">사이드바 → ✅ 일별 체크</span>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;">
+                    <!-- 좌측: 달력 사용법 -->
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:12px;color:var(--accent-green);font-weight:600;margin-bottom:8px;">📅 달력 (좌측)</p>
+                        <ul style="font-size:12px;color:var(--text-secondary);line-height:1.9;padding-left:16px;">
+                            <li><b>◀ / ▶</b>로 월 이동</li>
+                            <li>날짜를 <b>클릭</b>하면 파란 배경으로 선택됨</li>
+                            <li>오늘 날짜는 <span style="color:var(--accent-cyan);">청록색</span>으로 표시</li>
+                            <li>태스크가 있는 날은 <b>·숫자</b>로 표시</li>
+                            <li>일요일은 <span style="color:#f87171;">빨간색</span></li>
+                        </ul>
+                    </div>
+                    <!-- 우측: 태스크 관리 -->
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:12px;color:var(--accent-green);font-weight:600;margin-bottom:8px;">📝 태스크 (우측)</p>
+                        <ul style="font-size:12px;color:var(--text-secondary);line-height:1.9;padding-left:16px;">
+                            <li><b>[+ 태스크 추가]</b> 클릭 → 대화상자</li>
+                            <li>입력: <b>제목</b>(필수), 설명, 날짜, 우선순위(1~5)</li>
+                            <li><b>체크박스</b> 클릭 → 완료 처리 (취소선 표시)</li>
+                            <li><b>🗑️</b> 클릭 → 확인 후 삭제</li>
+                            <li>완료 상태는 <b>진행률에 자동 반영</b></li>
+                        </ul>
+                    </div>
+                </div>
+                <p style="font-size:12px;color:var(--text-dark);">💡 팁: 프로젝트 탭을 먼저 선택해야 합니다. 태스크는 선택된 프로젝트에 속합니다.</p>
+            </div>
+
+            <!-- STEP 5: 대시보드 · 추적 확인 -->
+            <div class="glass" style="padding:28px 32px;margin-bottom:20px;border-left:4px solid var(--accent-pink);">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+                    <span style="display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;background:rgba(244,114,182,0.15);color:var(--accent-pink);font-weight:900;font-size:16px;">5</span>
+                    <h3 style="font-size:18px;font-weight:700;">대시보드 · 추적/분석 확인</h3>
+                </div>
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:12px;">
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:12px;color:var(--accent-blue);font-weight:600;margin-bottom:6px;">📋 대시보드</p>
+                        <ul style="font-size:12px;color:var(--text-secondary);line-height:1.8;padding-left:16px;">
+                            <li>전체 프로젝트 수 · 완료 · 진행중</li>
+                            <li>평균 달성률 (자동 계산)</li>
+                            <li>오늘 태스크 완료/전체</li>
+                            <li>프로젝트별 상태·진행률 테이블</li>
+                        </ul>
+                    </div>
+                    <div style="background:rgba(0,0,0,0.2);border-radius:10px;padding:14px 16px;border:1px solid rgba(255,255,255,0.06);">
+                        <p style="font-size:12px;color:var(--accent-purple);font-weight:600;margin-bottom:6px;">📈 추적/분석</p>
+                        <ul style="font-size:12px;color:var(--text-secondary);line-height:1.8;padding-left:16px;">
+                            <li>프로젝트별 태스크 · 월별 달성률</li>
+                            <li>가중치 · 완료 태스크 · 마일스톤 수</li>
+                            <li>전체 진행률 바</li>
+                            <li>12개월 상태 인디케이터 (색상)</li>
+                        </ul>
+                    </div>
+                </div>
+                <p style="font-size:12px;color:var(--text-dark);">💡 달성률은 <b>일별 태스크 완료 수 / 전체 태스크 수 × 100</b>으로 자동 계산됩니다.</p>
+            </div>
+
+            <!-- 요약 플로우차트 -->
+            <div class="glass" style="padding:28px 32px;text-align:center;background:linear-gradient(135deg,rgba(96,165,250,0.06),rgba(167,139,250,0.06));">
+                <h3 style="font-size:16px;margin-bottom:20px;font-weight:700;">📌 전체 흐름 요약</h3>
+                <div style="display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600;">
+                    <span style="padding:8px 16px;border-radius:10px;background:rgba(34,211,238,0.12);color:var(--accent-cyan);">프로그램 실행</span>
+                    <span style="color:var(--text-dark);">→</span>
+                    <span style="padding:8px 16px;border-radius:10px;background:rgba(96,165,250,0.12);color:var(--accent-blue);">연도 확인</span>
+                    <span style="color:var(--text-dark);">→</span>
+                    <span style="padding:8px 16px;border-radius:10px;background:rgba(167,139,250,0.12);color:var(--accent-purple);">프로젝트 추가</span>
+                    <span style="color:var(--text-dark);">→</span>
+                    <span style="padding:8px 16px;border-radius:10px;background:rgba(34,211,238,0.12);color:var(--accent-cyan);">월별 계획</span>
+                    <span style="color:var(--text-dark);">→</span>
+                    <span style="padding:8px 16px;border-radius:10px;background:rgba(52,211,153,0.12);color:var(--accent-green);">일별 태스크</span>
+                    <span style="color:var(--text-dark);">→</span>
+                    <span style="padding:8px 16px;border-radius:10px;background:rgba(244,114,182,0.12);color:var(--accent-pink);">대시보드 확인</span>
+                </div>
+                <p style="font-size:12px;color:var(--text-dark);margin-top:14px;">이 순서대로 진행하면 MBO 목표를 체계적으로 관리할 수 있습니다.</p>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>© 2026 MBO Project Leader. 순수 데스크톱 앱 · Python + tkinter + SQLite. Designed with ✨ Liquid Glass Style.</p>
+    </footer>
+
+</div>
+
+<script>
+    // ===== Particle System =====
+    (function() {
+        const container = document.getElementById('particles');
+        const count = 30;
+        for (let i = 0; i < count; i++) {
+            const p = document.createElement('div');
+            p.classList.add('particle');
+            p.style.left = Math.random() * 100 + '%';
+            p.style.width = p.style.height = (2 + Math.random() * 4) + 'px';
+            p.style.animationDuration = (10 + Math.random() * 20) + 's';
+            p.style.animationDelay = (Math.random() * 15) + 's';
+            p.style.opacity = 0.1 + Math.random() * 0.15;
+            container.appendChild(p);
+        }
+    })();
+
+    // ===== Scroll Reveal =====
+    (function() {
+        const reveals = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.12 });
+        reveals.forEach(el => observer.observe(el));
+    })();
+
+    // ===== Smooth Scroll =====
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+        link.addEventListener('click', e => {
+            e.preventDefault();
+            const target = document.querySelector(link.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+</script>
+
+</body>
+</html>

@@ -6,7 +6,7 @@ MBO Project Leader - 연도별 프로젝트 목표 관리 프로그램
 추가 패키지 설치 없이 Python만으로 실행됩니다.
 """
 
-__version__ = "1.0.0"
+__version__ = "2026.03.03.1"
 
 import os
 import sys
@@ -25,7 +25,7 @@ from urllib.error import URLError
 # Auto-Updater (GitHub Releases)
 # ============================================================
 # TODO: 아래 값을 실제 GitHub 저장소로 변경하세요
-GITHUB_OWNER = "YOUR_GITHUB_USERNAME"   # ← GitHub 사용자명
+GITHUB_OWNER = "HyeonheeKIM"   # ← GitHub 사용자명
 GITHUB_REPO  = "MBO-Project-Leader"     # ← 저장소 이름
 
 
