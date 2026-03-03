@@ -1,0 +1,36 @@
+name: Build & Release EXE
+
+on:
+  push:
+    tags:
+      - 'v*'   # v1.0.0, v1.1.0 등 태그 푸시 시 자동 실행
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install PyInstaller
+      run: pip install pyinstaller
+    
+    - name: Build EXE
+      run: |
+        cd src
+        pyinstaller --noconfirm --onefile --windowed --name "MBO_Project_Leader" Project_Leader.py
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: src/dist/MBO_Project_Leader.exe
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
