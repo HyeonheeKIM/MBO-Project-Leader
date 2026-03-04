@@ -33,6 +33,8 @@ pyinstaller ^
     --onefile ^
     --windowed ^
     --name "MBO_Project_Leader" ^
+    --icon "app_icon.ico" ^
+    --add-data "app_icon.ico;." ^
     --hidden-import "tkinter" ^
     --hidden-import "sqlite3" ^
     Project_Leader.py

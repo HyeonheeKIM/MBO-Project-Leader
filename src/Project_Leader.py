@@ -6,7 +6,7 @@ MBO Project Leader - 연도별 프로젝트 목표 관리 프로그램
 추가 패키지 설치 없이 Python만으로 실행됩니다.
 """
 
-__version__ = "2026.03.03.1"
+__version__ = "2026.03.04.1"
 
 import os
 import sys
@@ -265,11 +265,17 @@ class ProgressCanvas(tk.Canvas):
 class MBOApp(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("MBO Project Leader - 프로젝트 목표 관리")
+        self.title(f"MBO Project Leader v{__version__}")
         self.geometry("1200x750")
         self.minsize(950, 600)
         self.configure(bg=Theme.BG)
         self.attributes('-alpha', 1.0)    # fully opaque
+
+        # Window icon (supports both script and PyInstaller --onefile)
+        _base = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
+        _icon_path = os.path.join(_base, "app_icon.ico")
+        if os.path.exists(_icon_path):
+            self.iconbitmap(_icon_path)
 
         # Application state
         self.current_year = datetime.now().year
