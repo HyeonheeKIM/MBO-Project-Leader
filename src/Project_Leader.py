@@ -6,7 +6,7 @@ MBO Project Leader - 연도별 프로젝트 목표 관리 프로그램
 추가 패키지 설치 없이 Python만으로 실행됩니다.
 """
 
-__version__ = "2026.03.04.3"
+__version__ = ""
 
 import os
 import sys
@@ -65,39 +65,51 @@ def check_update_async(parent_window):
 
 def _download_and_launch(parent, exe_url, version):
     """EXE 다운로드 → 현재 프로그램 종료 → 새 EXE 실행"""
+    import subprocess
+
     # 진행 표시 다이얼로그
     dlg = tk.Toplevel(parent)
     dlg.title("업데이트 중...")
-    dlg.geometry("360x120")
+    dlg.geometry("380x140")
     dlg.configure(bg="#f0f2fc")
     dlg.transient(parent)
     dlg.grab_set()
     dlg.resizable(False, False)
+    dlg.protocol("WM_DELETE_WINDOW", lambda: None)  # 닫기 방지
 
     tk.Label(dlg, text=f"v{version} 다운로드 중...", font=("맑은 고딕", 11, "bold"),
              bg="#f0f2fc", fg="#1c1e3a").pack(pady=(20, 8))
     prog_var = tk.DoubleVar(value=0)
-    prog_bar = ttk.Progressbar(dlg, variable=prog_var, maximum=100, length=300)
+    prog_bar = ttk.Progressbar(dlg, variable=prog_var, maximum=100, length=320)
     prog_bar.pack(padx=20)
     status_lbl = tk.Label(dlg, text="연결 중...", font=("맑은 고딕", 9), bg="#f0f2fc", fg="#6b7280")
     status_lbl.pack(pady=(4, 0))
 
+    def _update_ui(func):
+        """메인 스레드에서 안전하게 UI 업데이트"""
+        try:
+            parent.after(0, func)
+        except Exception:
+            pass
+
     def _download():
         try:
-            # 다운로드 위치: EXE가 있는 폴더 (또는 스크립트 폴더)
+            # 다운로드 위치 결정
             if getattr(sys, 'frozen', False):
                 dest_dir = os.path.dirname(sys.executable)
                 old_exe = sys.executable
+                old_name = os.path.basename(old_exe)
             else:
                 dest_dir = os.path.dirname(os.path.abspath(__file__))
                 old_exe = None
+                old_name = None
 
-            # URL에서 파일명 추출
-            fname = exe_url.rsplit("/", 1)[-1] if "/" in exe_url else "MBO_Project_Leader_new.exe"
-            dest_path = os.path.join(dest_dir, fname)
+            # 임시 파일명으로 다운로드 (실행 중인 EXE와 충돌 방지)
+            temp_name = f"MBO_Project_Leader_v{version}_new.exe"
+            dest_path = os.path.join(dest_dir, temp_name)
 
             req = Request(exe_url, headers={"User-Agent": "MBO-Project-Leader-Updater"})
-            resp = urlopen(req, timeout=60)
+            resp = urlopen(req, timeout=120)
             total = int(resp.headers.get("Content-Length", 0))
             downloaded = 0
             chunk_size = 65536
@@ -111,38 +123,64 @@ def _download_and_launch(parent, exe_url, version):
                     downloaded += len(chunk)
                     if total > 0:
                         pct = downloaded / total * 100
-                        parent.after(0, lambda p=pct: prog_var.set(p))
                         mb = downloaded / 1024 / 1024
                         tmb = total / 1024 / 1024
-                        parent.after(0, lambda m=mb, t=tmb: status_lbl.configure(
+                        _update_ui(lambda p=pct: prog_var.set(p))
+                        _update_ui(lambda m=mb, t=tmb: status_lbl.configure(
                             text=f"{m:.1f} MB / {t:.1f} MB"))
 
-            parent.after(0, lambda: status_lbl.configure(text="다운로드 완료! 실행 중..."))
-            parent.after(0, lambda: prog_var.set(100))
+            _update_ui(lambda: prog_var.set(100))
+            _update_ui(lambda: status_lbl.configure(text="다운로드 완료! 재시작 준비 중..."))
 
-            # 새 EXE 실행
-            import subprocess
-            if old_exe and os.path.normpath(dest_path) != os.path.normpath(old_exe):
-                # 다른 파일명으로 받은 경우: 배치로 교체 후 실행
+            # 다운로드 파일 크기 확인
+            if not os.path.exists(dest_path) or os.path.getsize(dest_path) < 1024:
+                _update_ui(lambda: status_lbl.configure(text="오류: 다운로드 파일이 올바르지 않습니다."))
+                _update_ui(lambda: dlg.after(3000, dlg.destroy))
+                return
+
+            if old_exe:
+                # EXE 모드: 배치파일로 교체 후 실행
+                # 현재 EXE를 .old로 rename → 새 파일을 원래 이름으로 rename → 실행
                 bat_path = os.path.join(dest_dir, "_update.bat")
+                old_backup = old_exe + ".old"
                 with open(bat_path, 'w', encoding='utf-8') as bf:
-                    bf.write(f'@echo off\n')
-                    bf.write(f'timeout /t 2 /nobreak >nul\n')
-                    bf.write(f'copy /y "{dest_path}" "{old_exe}"\n')
-                    bf.write(f'del "{dest_path}"\n')
+                    bf.write('@echo off\n')
+                    bf.write('chcp 65001 >nul\n')
+                    bf.write('echo 업데이트 중... 잠시 기다려주세요.\n')
+                    bf.write(f'echo 이전 버전 백업 중...\n')
+                    bf.write(':wait_loop\n')
+                    bf.write(f'timeout /t 1 /nobreak >nul\n')
+                    bf.write(f'ren "{old_exe}" "{os.path.basename(old_backup)}" 2>nul\n')
+                    bf.write(f'if exist "{old_exe}" goto wait_loop\n')
+                    bf.write(f'echo 새 버전 적용 중...\n')
+                    bf.write(f'copy /y "{dest_path}" "{old_exe}" >nul\n')
+                    bf.write(f'if errorlevel 1 (\n')
+                    bf.write(f'    echo 업데이트 실패. 이전 버전을 복원합니다.\n')
+                    bf.write(f'    ren "{old_backup}" "{old_name}" 2>nul\n')
+                    bf.write(f'    pause\n')
+                    bf.write(f'    exit /b 1\n')
+                    bf.write(f')\n')
+                    bf.write(f'del "{dest_path}" 2>nul\n')
+                    bf.write(f'del "{old_backup}" 2>nul\n')
+                    bf.write(f'echo 업데이트 완료! 프로그램을 시작합니다.\n')
                     bf.write(f'start "" "{old_exe}"\n')
-                    bf.write(f'del "%~f0"\n')
+                    bf.write(f'del "%~f0" 2>nul\n')
+
+                # 배치 실행 후 앱 종료 (1초 유예)
                 subprocess.Popen(["cmd", "/c", bat_path],
                                  creationflags=0x08000000)  # CREATE_NO_WINDOW
+                import time
+                time.sleep(1)
+                _update_ui(lambda: parent.destroy())
+                os._exit(0)  # 강제 종료하여 EXE 파일 잠금 해제
             else:
-                # 개발 모드이거나 같은 이름: 그냥 실행
+                # 개발 모드: 새 EXE 바로 실행
                 subprocess.Popen([dest_path])
-
-            parent.after(500, lambda: parent.destroy())
+                _update_ui(lambda: parent.destroy())
 
         except Exception as ex:
-            parent.after(0, lambda: status_lbl.configure(text=f"오류: {ex}"))
-            parent.after(0, lambda: dlg.after(3000, dlg.destroy))
+            _update_ui(lambda: status_lbl.configure(text=f"오류: {ex}"))
+            _update_ui(lambda: dlg.after(5000, dlg.destroy))
 
     t = threading.Thread(target=_download, daemon=True)
     t.start()
