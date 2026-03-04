@@ -6,7 +6,7 @@ MBO Project Leader - 연도별 프로젝트 목표 관리 프로그램
 추가 패키지 설치 없이 Python만으로 실행됩니다.
 """
 
-__version__ = "2026.03.04.2"
+__version__ = "2026.03.04.3"
 
 import os
 import sys
@@ -442,9 +442,69 @@ class MBOApp(tk.Tk):
                          if k != self.current_page else None)
                 self.nav_btns[key] = btn
 
+        # Bottom area: Notice button
+        bottom_f = tk.Frame(self.sidebar, bg=Theme.BG_DARK)
+        bottom_f.pack(side=tk.BOTTOM, fill=tk.X, padx=16, pady=(0, 16))
+        notice_btn = tk.Label(bottom_f, text="📢 공지사항", font=("맑은 고딕", 10),
+                              bg=Theme.BG_CARD_HOVER, fg=Theme.TEXT, anchor="center",
+                              cursor="hand2", padx=10, pady=6)
+        notice_btn.pack(fill=tk.X)
+        notice_btn.bind("<Button-1>", lambda e: self._show_notice())
+        notice_btn.bind("<Enter>", lambda e: notice_btn.configure(bg=Theme.BG_CARD))
+        notice_btn.bind("<Leave>", lambda e: notice_btn.configure(bg=Theme.BG_CARD_HOVER))
+
         # Main area
         self.main_area = tk.Frame(self, bg=Theme.BG)
         self.main_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+    def _show_notice(self):
+        """app_history.md 파일을 읽어 공지사항 다이얼로그에 표시"""
+        # app_history.md 경로: 스크립트(또는 EXE) 옆
+        _base = getattr(sys, '_MEIPASS', None)
+        paths_to_try = []
+        if _base:
+            paths_to_try.append(os.path.join(_base, "app_history.md"))
+        paths_to_try.append(os.path.join(BASE_DIR, "app_history.md"))
+        paths_to_try.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_history.md"))
+
+        content = ""
+        for p in paths_to_try:
+            if os.path.exists(p):
+                try:
+                    with open(p, "r", encoding="utf-8") as f:
+                        content = f.read()
+                except Exception:
+                    pass
+                break
+        if not content.strip():
+            content = "등록된 공지사항이 없습니다."
+
+        win = tk.Toplevel(self)
+        win.title("📢 공지사항")
+        win.geometry("560x480")
+        win.configure(bg=Theme.BG_CARD)
+        win.transient(self)
+        win.grab_set()
+        win.resizable(True, True)
+
+        tk.Label(win, text="📢 공지사항 / 업데이트 히스토리",
+                 font=("맑은 고딕", 14, "bold"),
+                 bg=Theme.BG_CARD, fg=Theme.TEXT).pack(pady=(20, 12), padx=24, anchor="w")
+
+        txt_f = tk.Frame(win, bg=Theme.BG_CARD)
+        txt_f.pack(fill=tk.BOTH, expand=True, padx=24, pady=(0, 12))
+        sb = tk.Scrollbar(txt_f)
+        sb.pack(side=tk.RIGHT, fill=tk.Y)
+        txt = tk.Text(txt_f, font=("맑은 고딕", 10), bg=Theme.BG_INPUT, fg=Theme.TEXT,
+                      relief="flat", wrap="word", highlightthickness=1,
+                      highlightbackground=Theme.BORDER, yscrollcommand=sb.set)
+        txt.pack(fill=tk.BOTH, expand=True)
+        sb.config(command=txt.yview)
+        txt.insert("1.0", content)
+        txt.configure(state="disabled")
+
+        RoundButton(win, text="닫기", command=win.destroy,
+                    bg_color=Theme.TEXT_DIM, width=80, height=32).pack(pady=(0, 16))
 
     def _navigate(self, page):
         self.current_page = page

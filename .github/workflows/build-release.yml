@@ -26,7 +26,7 @@ jobs:
     - name: Build EXE
       run: |
         cd src
-        pyinstaller --noconfirm --onefile --windowed --name "MBO_Project_Leader" Project_Leader.py
+        pyinstaller --noconfirm --onefile --windowed --name "MBO_Project_Leader" --icon "app_icon.ico" --add-data "app_icon.ico;." --add-data "app_history.md;." --hidden-import tkinter --hidden-import sqlite3 Project_Leader.py
     
     - name: Create Release
       uses: softprops/action-gh-release@v2
