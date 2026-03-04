@@ -6,7 +6,11 @@ MBO Project Leader - 연도별 프로젝트 목표 관리 프로그램
 추가 패키지 설치 없이 Python만으로 실행됩니다.
 """
 
+<<<<<<< HEAD
 __version__ = ""
+=======
+__version__ = "2026.03.04.4"
+>>>>>>> 8329dde (v2026.03.04.4 - 업데이트 수정)
 
 import os
 import sys
